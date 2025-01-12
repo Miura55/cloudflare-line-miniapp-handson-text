@@ -1,0 +1,260 @@
+
+<!doctype html>
+
+<html>
+<head>
+  <meta name="viewport" content="width=device-width, minimum-scale=1.0, initial-scale=1.0, user-scalable=yes">
+  <meta name="theme-color" content="#4F7DC9">
+  <meta charset="UTF-8">
+  <title>Cloudflare PagesでLINEミニアプリを開発するハンズオン</title>
+  <link rel="stylesheet" href="//fonts.googleapis.com/css?family=Source+Code+Pro:400|Roboto:400,300,400italic,500,700|Roboto+Mono">
+  <link rel="stylesheet" href="//fonts.googleapis.com/icon?family=Material+Icons">
+  <link rel="stylesheet" href="https://storage.googleapis.com/claat-public/codelab-elements.css">
+  <style>
+    .success {
+      color: #1e8e3e;
+    }
+    .error {
+      color: red;
+    }
+  </style>
+</head>
+<body>
+  <google-codelab-analytics gaid="UA-49880327-14"></google-codelab-analytics>
+  <google-codelab codelab-gaid=""
+                  id="linedc-cloudflare-pages-handson"
+                  title="Cloudflare PagesでLINEミニアプリを開発するハンズオン"
+                  environment="web"
+                  feedback-link="https://twitter.com/k_miura_io">
+    
+      <google-codelab-step label="はじめに" duration="0">
+        <p>  この資料では、Cloudflare Pagesを使ってLINEミニアプリの開発を体験するハンズオン資料となっております。</p>
+<p>  シンプルなモバイルオーダーアプリの開発を通じて、LINEミニアプリの開発手法、そしてCloudflare Pagesを使ったアプリケーションのデプロイ、ホスティングを体験できる内容となっております。</p>
+<h2 is-upgraded>今回作るもの</h2>
+<p>今回のシナリオは、最近よくみかけるようになったモバイルオーダーシステムをCloudflareで開発していきます。</p>
+<p>以下の画像の通り、商品を選択し注文内容を確認したらサーバーに注文内容が送信される挙動を想定します。</p>
+<h2 is-upgraded>システム構成</h2>
+<p>今回のシステムはすべてCloudflareで完結する構成となっています。</p>
+<p>まず、アプリケーションはCldudflare Pagesでデプロイ、ホスティングを行います。ユーザの注文情報は、Cloudflare KVというCloudflareが提供しているサーバーレスKVS(Key Value Storage)に送信する仕組みです。</p>
+<p class="image-container"><img style="width: 601.70px" src="img\\15093566ed4d85.png"></p>
+<h2 is-upgraded>使用する技術セット</h2>
+<p>今回のシステムで使用する技術セットを以下にリストアップしていきます。</p>
+<ul>
+<li>Next.js：今回のアプリケーションで使用するフレームワークです</li>
+<li>wrangler：Cloudflareにアプリケーションをデプロイするときに使用するCLIツールです</li>
+<li>Cloudflare Tunnel：ローカルのデバッグのときに使用するClouflareのトンネリングサービスです</li>
+</ul>
+<p>今回のアプリケーションの全体像を紹介したところで、次のページから実際に開発を進めていきます。</p>
+
+
+      </google-codelab-step>
+    
+      <google-codelab-step label="環境構築" duration="0">
+        <p>今回のハンズオンの環境構築をやっていきます。</p>
+<h2 is-upgraded>事前準備</h2>
+<ul>
+<li>LINE Developersアカウント</li>
+<li>Cloudflareアカウント</li>
+<li>Node.js(v20.0.0以上)</li>
+</ul>
+<h2 is-upgraded>ミニアプリのチャネルを作成</h2>
+<p>まずはLINEミニアプリを作るために必要なチャネルを作成します。</p>
+<p>以下のURLを参考にチャネルを作成します。</p>
+<p><a href="https://developers.line.biz/ja/docs/line-mini-app/develop/develop-overview/#create-line-mini-app-channel" target="_blank">https://developers.line.biz/ja/docs/line-mini-app/develop/develop-overview/#create-line-mini-app-channel</a></p>
+<p>ミニアプリではアイコンは任意で設定できますが、もし何か設定したい場合は以下の画像を使用しても結構です。</p>
+<p class="image-container"><img style="width: 512.00px" src="img\\65552c39d31ad406.png"></p>
+<p>チャネルを作成したら、この後の手順で必要になるので開発用の本番用のLIFF URLをコピーしてどこかにメモしておきます。</p>
+<p class="image-container"><img style="width: 601.70px" src="img\\8b807849c7fab8e9.png"></p>
+<h2 is-upgraded>wranglerの認証</h2>
+<aside class="special"><p>すでにwranglerの認証が終わっている場合はこの手順をスキップしても問題ありません。</p>
+</aside>
+<p>続いてwranglerの認証を行います。認証は以下のコマンドで行います。</p>
+<pre>npx wrangler login</pre>
+<p>コマンドを実行すると、ブラウザで以下の確認画面が表示されるはずです。もし、表示されない場合はコンソールで出力されたURLを手動で開いてください。またログイン画面が表示された場合はログインを行ってください。</p>
+<p class="image-container"><img style="width: 403.00px" src="img\\a6d3c23fb39f38d6.png"></p>
+<p>確認画面で表示される内容を確認し、問題なければ「Allow」ボタンをクリックします。</p>
+<p>以下の画面が表示されたらwranglerの認証は正常に完了しています。この画面を閉じてターミナルを確認するとコマンドが正常に実行されたことが確認できるはずです。</p>
+<p class="image-container"><img style="width: 601.70px" src="img\\53abfcce14d5c5e8.png"></p>
+<p>念の為に以下のコマンドを実行してユーザー情報を確認します。</p>
+<pre>npx wrangler whoami</pre>
+<p>以下の出力の通りユーザー情報が出力されて認証が通っていることが確認できます。</p>
+<pre> ⛅️ wrangler 3.100.0
+--------------------
+
+Getting User settings...
+👋 You are logged in with an OAuth Token, associated with the email test@example.com.
+┌──────────────────────────────────┬──────────────────────────────────┐
+│ Account Name                     │ Account ID                       │
+├──────────────────────────────────┼──────────────────────────────────┤
+│ test@example.com&#39;s Account       │ 881b276a40519f90589027ba18827390 │
+└──────────────────────────────────┴──────────────────────────────────┘
+🔓 Token Permissions: If scopes are missing, you may need to logout and re-login.
+Scope (Access)
+- account (read)
+- user (read)
+- workers (write)
+- workers_kv (write)
+- workers_routes (write)
+- workers_scripts (write)
+- workers_tail (read)
+- d1 (write)
+- pages (write)
+- zone (read)
+- ssl_certs (write)
+- ai (write)
+- queues (write)
+- pipelines (write)
+- offline_access
+</pre>
+<h2 is-upgraded>Cloudflaredのセットアップ</h2>
+<p>最後にCloudflaredのセットアップを行います。</p>
+<p>Cloudflaredとはローカルのデバッグ時に使用するCloudflare Tunnelのクライアントツールです。</p>
+<p>こちらはWindows、Macはそれぞれ以下のコマンドを実行すればインストール可能です。</p>
+<p>Windows</p>
+<pre>winget install --id Cloudflare.cloudflared</pre>
+<p>Mac</p>
+<pre>brew install cloudflared</pre>
+<p>もし、Linux(WSL含む)を使って環境構築を行っている場合は以下のURLからご自身のPCに合わせたインストーラーをダウンロードし、セットアップを行ってください。</p>
+<p><a href="https://developers.cloudflare.com/cloudflare-one/connections/connect-networks/downloads/" target="_blank">https://developers.cloudflare.com/cloudflare-one/connections/connect-networks/downloads/</a></p>
+<p>以上で事前準備は完了です。次のページから実際にアプリケーションを動かしていきます。</p>
+
+
+      </google-codelab-step>
+    
+      <google-codelab-step label="ローカル環境で動かす" duration="0">
+        <p>まずは今回のアプリケーションをローカル環境で動かしてみます。</p>
+<h2 is-upgraded>ソースコードのクローン</h2>
+<p>ソースコードは以下のコマンドを任意のディレクトリ上で実行し、クローンしておきます。</p>
+<pre>git clone https://github.com/Miura55/cloudflare-lineminiapp-handson</pre>
+<p>以下のコマンドを実行し、依存関係をインストールします。</p>
+<pre>cd cloudflare-lineminiapp-handson
+npm install </pre>
+<h2 is-upgraded>設定情報を記入する</h2>
+<p>依存関係をインストールできたらアプリケーションを動かすために必要な設定情報を記入していきます。</p>
+<p>まずは開発用の設定情報を記入します。以下のコマンドで開発用の環境情報の定義ファイルを用意します。</p>
+<pre>cat config/develop.json</pre>
+<p>任意のテキストエディタを開き、  <code>config/develop.json</code> に以下の内容を記述します。ここでのLIFF IDというのは、ミニアプリのチャネルを作成したときにメモしたLIFF URLの <code>https://miniapp.line.me/</code> の後にある文字列のことをいいます。</p>
+<pre>{
+    &#34;LIFF_ID&#34;: &#34;開発用のLIFFID&#34;,
+    &#34;ENABLE_VCONSOLE&#34;: &#34;true&#34;
+}</pre>
+<p>同様に本番用の設定情報を記入します。以下のコマンドで開発用の環境情報の定義ファイルを用意します。</p>
+<pre>cat config/develop.json</pre>
+<p>任意のテキストエディタを開き、 <code>config/production.json</code> に以下の内容を記述します。</p>
+<pre>{
+    &#34;LIFF_ID&#34;: &#34;本番用のLIFFID&#34;,
+    &#34;ENABLE_VCONSOLE&#34;: &#34;false&#34;
+}
+</pre>
+<h2 is-upgraded>アプリケーションを起動する</h2>
+<p>設定ファイルを用意したところで、実際にアプリケーションを起動します。Next.jsではデフォルトで開発サーバーを立てるコマンドがありますが、今回はCloudflare Pagesで動かすことを想定していることと、Cloudflare KVの挙動をテストしたいのでCloudflare Pages向けにビルドを行ったあとにローカルサーバーを立ち上げます。</p>
+<p>アプリケーションのビルドとローカルサーバーの立ち上げは以下のコマンドを実行します。</p>
+<pre>npm run preview</pre>
+<p>ビルドが終わり、以下の出力の通りになればアプリケーションは正常に立ち上がっています。</p>
+<pre>✨ Compiled Worker successfully
+✨ Parsed 1 valid header rule.
+Your worker has access to the following bindings:
+- KV Namespaces:
+  - KV_ORDER: bef3c0078cd5466db761feb9a8615091 (local)
+⎔ Starting local server...
+[wrangler:inf] Ready on http://localhost:8788</pre>
+<p>アプリケーションを立ち上げたらCloudflare Tunnelを起動します。別のターミナルを立ち上げて、以下のコマンドを実行します。</p>
+<pre>cloudflared tunnel --url localhost:8788</pre>
+<p>起動が成功したら以下の通り <code>https://【ランダムな文字列】.trycloudflare.com</code>  が表示されます。これがローカルで起動したミニアプリのエンドポイントになるので、コピーしどこかにメモしておきます。</p>
+<pre>2025-01-11T17:24:26Z INF Requesting new quick Tunnel on trycloudflare.com...
+2025-01-11T17:24:30Z INF +--------------------------------------------------------------------------------------------+
+2025-01-11T17:24:30Z INF |  Your quick Tunnel has been created! Visit it at (it may take some time to be reachable):  |
+2025-01-11T17:24:30Z INF |  https://testconnection.trycloudflare.com                                    |
+2025-01-11T17:24:30Z INF +--------------------------------------------------------------------------------------------+</pre>
+<p>LINE Developerのコンソール画面のミニアプリのチャネル設定画面を開き、先程メモしたローカルのエンドポイントをエンドポイントURLの設定の中の「開発用」に書き込んで保存します。</p>
+<p class="image-container"><img style="width: 601.70px" src="img\\253d9b9f0c2ba7bd.png"></p>
+<h2 is-upgraded>動作確認</h2>
+<p>それでは、動作確認をします。</p>
+<p>LIFFのチャネルを作成したときにメモした開発用のURLを使ってブラウザで開くと以下の通りスマホから開くように誘導するQRコードが表示されるので、お手元のスマホのQRコードリーダーでミニアプリを開いてみます。<img style="width: 601.70px" src="img\\cee02311eb26a6fc.png"></p>
+<p>URLを開くとLINEアプリが起動し、以下の通り開発用のアプリケーションが読み込まれたら、ローカル環境のミニアプリは正常に動作しています。</p>
+<p class="image-container"><img style="width: 152.50px" src="img\\9c901db35b0289b8.png"></p>
+<p>画面の右下にある「vConsole」というのは、スマホでブラウザの開発者コンソールを起動するためのライブラリで、WeChatを開発しているTencentが提供しています。</p>
+<p>このvConsoleをタップすると以下の通り開発者コンソールが起動し、アプリケーションのデバッグが効率よくなります。</p>
+<p class="image-container"><img style="width: 199.72px" src="img\\b0ff97bdba7b113a.png"></p>
+<p>このvConsoleは画面内で自由にドラッグ＆ドロップして配置することができるので、適当な場所に移動します。</p>
+<p>すると右下にレジアイコンのボタンが表示されます。これが注文確認、送信画面を表示するためのボタンになります。</p>
+<p class="image-container"><img style="width: 142.35px" src="img\\c50dd00dbead07ff.png"></p>
+<p>試しに適当にメニューから適当に注文したい商品を選択します。すると、注文確認のボタンにバッジが表示されて、選択した商品の数を確認できます。</p>
+<p class="image-container"><img style="width: 96.00px" src="img\\6b3e7d1265d945cb.png"></p>
+<p>いくつか商品を選択したらボタンを押して注文確認画面を開きます。注文内容が一覧で表示されるので間違って注文したものがあれば削除をし、確定したら「SUBMIT ORDER」をタップすることでkvに注文内容が記録されます。</p>
+<p class="image-container"><img style="width: 229.50px" src="img\\4bb25748d507d034.png"></p>
+<p>ローカルで動作確認するときのKVのデータはアプリケーションのディレクトリ内にある <code>.wrangler</code> ディレクトリに保存されます。</p>
+<p class="image-container"><img style="width: 257.00px" src="img\\b9b57960c2612739.png"></p>
+<p>ここまででローカル環境で動作が確認できました。</p>
+<p>次のページではCloudflareの環境にデプロイしていきます。</p>
+
+
+      </google-codelab-step>
+    
+      <google-codelab-step label="Cloudflareにデプロイ" duration="0">
+        <h2 is-upgraded>KVのネームスペースを作成</h2>
+<p>ここからCloudflareにデプロイしていきます。</p>
+<p>デプロイにあたり、今回アプリケーションで使用するKVのリソースを作成します。KVのネームスペースを作成します。</p>
+<pre>npx wrangler kv:namespace create &#34;line-miniapp-orders&#34;</pre>
+<p>作成されると以下の出力になり、KVのネームスペースが作成されたことが確認できます。この中にある id はアプリケーションの設定で必要になるので、どこかにメモしておきます。</p>
+<pre> ⛅️ wrangler 3.100.0 (update available 3.101.0)
+---------------------------------------------------------
+
+🌀 Creating namespace with title &#34;cloudflare-line-miniapp-hands-on-line-miniapp-orders&#34;
+✨ Success!
+Add the following to your configuration file in your kv_namespaces array:
+[[kv_namespaces]]
+binding = &#34;line_miniapp_orders&#34;
+id = &#34;dummynamespaceid&#34;
+</pre>
+<p>ネームスペースが作成されたらwrangler.tomlの <code>kv_namespaces</code> の項目を以下の通り修正します。</p>
+<pre>kv_namespaces = [
+  { binding = &#34;KV_ORDER&#34;, id = &#34;ネームスペースのID&#34; }
+]
+</pre>
+<h2 is-upgraded>デプロイ</h2>
+<p>ここまでできたらCloudflareにデプロイしていきます。デプロイは以下のコマンドで行います。</p>
+<pre>npm run deploy</pre>
+<p>途中で以下の表示がされたら、新規でプロジェクトを作成する必要があるのでEnterキーを入力して次のステップに進みます。</p>
+<pre>? The project you specified does not exist: &#34;cloudflare-line-miniapp-hands-on&#34;. Would you like to create it? › - Use arrow-keys. Return to submit.
+❯   Create a new project</pre>
+<p>ブランチ名の指定がありますが、これもmainブランチのままEnterキーを入力します。</p>
+<pre>✔ The project you specified does not exist: &#34;cloudflare-line-miniapp-hands-on&#34;. Would you like to create it? › Create a new project
+? Enter the production branch name: › main</pre>
+<p>その後、ソースコードがデプロイされていき、以下の出力の通りURLが出力されたらデプロイは成功です。</p>
+<pre>✨ Compiled Worker successfully
+✨ Uploading Worker bundle
+✨ Uploading _routes.json
+🌎 Deploying...
+✨ Deployment complete! Take a peek over at https://217f6c5e.cloudflare-line-miniapp-hands-on.pages.dev</pre>
+<p>ここで、 <code>https://217f6c5e.cloudflare-line-miniapp-hands-on.pages.dev</code> の中の 217f6c5e がデプロイのハッシュ値になっており、デプロイしたタイミングで反映したアプリケーションの内容を常に表示することが可能です。</p>
+<p>逆にハッシュ値を抜いた <code>https://cloudflare-line-miniapp-hands-on.pages.dev</code> が、デプロイで反映されたアプリケーションを動かすことができます。</p>
+<aside class="special"><p>ここで出力されるURLはユニークなので、ご自身のURLに置き換えてください。</p>
+</aside>
+<p>デプロイしたばかりの時はドメインの名前解決ができてないので、URLを開いてもアクセスができません。その間に本番用のLIFFエンドポイントを設定しておきます。</p>
+<p>開発用の時と同様にLINE Developerコンソールを開き、ミニアプリのチャネル設定画面にあるLIFFのエンドポイント設定の中の本番用にデプロイしたPagesのURLを設定します。</p>
+<p class="image-container"><img style="width: 601.70px" src="img\\2b7039d47a34d230.png"></p>
+<h2 is-upgraded>動作確認</h2>
+<p>それでは実際に動作確認してみましょう。</p>
+<p>開発用のときと同様に開発用のLIFF URLからQRコードを表示させてスマホのQRコードリーダーでスキャンして以下通りデプロイしたアプリケーションが表示されればデプロイは成功です。</p>
+<p>もし、表示されない場合は名前解決に時間がかかっている可能性があるので、時間を開けて再度開き直してみてください。</p>
+<p class="image-container"><img style="width: 195.74px" src="img\\1319a7430b323b41.png"></p>
+<p>本番用では詳細なデバッグができないように右下にあったvConsoleボタンが非表示になります。</p>
+<p>実際に商品を選択して注文すると、開発用ではローカルの環境にKVのデータが保存されていましたが、今度はCloudflare上にデータが記録されることになります。</p>
+<p>Cloudflareのコンソール画面を開き、「ストレージとデータベース→KV」を開いて「cloudflare-line-miniapp-hands-on-line-miniapp-orders」のKVタブを確認すると注文内容が記録されていることが確認できます。</p>
+<p class="image-container"><img style="width: 601.70px" src="img\\5d2ec1dbd4d51622.png"></p>
+<p>以上でCloudflare Pagesを使ったミニアプリのデプロイの開発は終了です。お疲れ様でした！</p>
+
+
+      </google-codelab-step>
+    
+  </google-codelab>
+
+  <script src="https://storage.googleapis.com/claat-public/native-shim.js"></script>
+  <script src="https://storage.googleapis.com/claat-public/custom-elements.min.js"></script>
+  <script src="https://storage.googleapis.com/claat-public/prettify.js"></script>
+  <script src="https://storage.googleapis.com/claat-public/codelab-elements.js"></script>
+  <script src="//support.google.com/inapp/api.js"></script>
+
+</body>
+</html>

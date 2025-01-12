@@ -1,0 +1,28 @@
+{
+  "environment": "web",
+  "format": "html",
+  "prefix": "https://storage.googleapis.com",
+  "mainga": "UA-49880327-14",
+  "updated": "2025-01-12T08:23:21Z",
+  "id": "linedc-cloudflare-pages-handson",
+  "duration": 0,
+  "title": "Cloudflare PagesでLINEミニアプリを開発するハンズオン",
+  "authors": "Koki Miura",
+  "summary": "Cloudflare PagesでLINEミニアプリを開発するハンズオン",
+  "source": "15YKeP0UFd1wMEwRLcAueDuXuD_YwBXVIghddrHEoeOI",
+  "theme": "web",
+  "status": [
+    "published"
+  ],
+  "category": [
+    "web"
+  ],
+  "tags": [
+    "cloudflare",
+    "frontend",
+    "linedc",
+    "web"
+  ],
+  "feedback": "https://twitter.com/k_miura_io",
+  "url": "linedc-cloudflare-pages-handson"
+}
