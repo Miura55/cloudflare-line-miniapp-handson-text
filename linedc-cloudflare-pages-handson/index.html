@@ -244,6 +244,23 @@ id = &#34;dummynamespaceid&#34;
 <p>Cloudflareのコンソール画面を開き、「ストレージとデータベース→KV」を開いて「cloudflare-line-miniapp-hands-on-line-miniapp-orders」のKVタブを確認すると注文内容が記録されていることが確認できます。</p>
 <p class="image-container"><img style="width: 601.70px" src="img\\5d2ec1dbd4d51622.png"></p>
 <p>以上でCloudflare Pagesを使ったミニアプリのデプロイの開発は終了です。お疲れ様でした！</p>
+<p>次のページでは今回構築したアプリケーションの片付けを行います。</p>
+
+
+      </google-codelab-step>
+    
+      <google-codelab-step label="片付け" duration="0">
+        <p>今回構築したアプリケーションはすべてCloudflareの無料プランで動くのでそのまま残しても問題ありませんが、不要な場合はリソースを削除していただくことをおすすめします。</p>
+<h2 is-upgraded>Pagesの削除</h2>
+<p>まずはCloudflare Pagesのリソースを削除していきます。</p>
+<p>以下のコマンドを実行すると削除できます。</p>
+<pre>npx wrangler pages project delete cloudflare-line-miniapp-hands-on</pre>
+<p>途中で以下の質問が来た時は y を入力するとリソースが削除されます。</p>
+<pre>? Are you sure you want to delete &#34;cloudflare-line-miniapp-hands-on&#34;? This action cannot be undone. › (Y/n)</pre>
+<h2 is-upgraded>KVの削除</h2>
+<p>Pagesを削除するとKVのネームスペースを削除できるようになります。</p>
+<p>以下のコマンドを実行すると削除できます。</p>
+<pre>npx wrangler kv namespace delete --binding=KV_ORDER</pre>
 
 
       </google-codelab-step>
